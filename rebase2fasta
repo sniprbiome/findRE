@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+<>; <>;
+while(<>) {
+    next if /^\s*$/ or /^<>$/;
+
+    if(/^>/) {
+        my $id = $_;
+        my $spacer = <>;
+        next if $spacer =~ /^This/;
+        my $first = <>;
+        next if $first =~ /^This/;
+        print "".(split /\t/, $id)[0]."\n";
+        $first =~ s/ //g;
+        $first =~ s/<>//;
+        print $first;
+    }
+    else {
+        s/ //g;
+        s/<>//;
+        print;
+    }
+}
