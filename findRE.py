@@ -12,11 +12,12 @@ MINIMUM_COVERAGE = 0.8;
 def main():
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("USAGE: findRE.py genome.fasta [all]")
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
+        print("USAGE: findRE.py genome.fasta output.tsv [all]")
         exit(1)
         
     input_genome = sys.argv[1]
+    output_file = sys.argv[2]
 
     # Make sure input file exists
     if not os.path.isfile(input_genome):
@@ -24,7 +25,7 @@ def main():
         exit(1)
 
     # Select which REBASE database to use
-    if len(sys.argv) > 2 and sys.argv[2] == "all":
+    if len(sys.argv) > 3 and sys.argv[3] == "all":
         rebase_fasta = SCRIPT_DIR+"/ref/REBASE_protein_seqs.fa"
         rebase_metadata = parse_rebase_metadata(SCRIPT_DIR+"/ref/REBASE_protein_seqs.txt")
     else:
@@ -43,7 +44,8 @@ def main():
     )
 
     # Print output table
-    summarize_results(
+    output_results(
+        output_file,
         best_hits_per_region,
         rebase_metadata,
         input_genome_blastdb
@@ -156,41 +158,42 @@ def extract_subsequence(genome_blast_db, contig, start, end):
 
     return str(proc.stdout).strip()
 
-def summarize_results(hits, rebase_data, genome):
+def output_results(output_file, hits, rebase_data, genome):
     '''Print output table'''
-    
-    print("\t".join(
-        [
-            "REBASE ID",
-            "UniProt ID",
-            "Genome location",
-            "Protein identity %",
-            "Coverage %",
-            "Organism",
-            "Enzyme type",
-            "Recognition sequence",
-            "Matching sequence"
-        ]
-    ))
+
+    with open(output_file, 'w') as out:
+        out.write("\t".join(
+            [
+                "REBASE ID",
+                "UniProt ID",
+                "Genome location",
+                "Protein identity %",
+                "Coverage %",
+                "Organism",
+                "Enzyme type",
+                "Recognition sequence",
+                "Matching sequence"
+            ]
+        )+"\n")
         
-    for contig, hits_in_contig in hits.items():
-        for hit in hits_in_contig:
-            rebase = rebase_data.get(hit["qaccver"])
-            coverage = 100 * float(hit["length"]) / float(hit["qlen"])
-            sequence = extract_subsequence(genome, hit["saccver"], int(hit["sstart"]), int(hit["send"]))
-            print(
-                "\t".join([
-                    rebase.get("REBASE", "-"),
-                    rebase.get("UniProt", "-"),
-                    hit["saccver"] + ":" + hit["sstart"] + "-" + hit["send"],
-                    hit["pident"],
-                    str(round(coverage, 2)),
-                    rebase.get("OrgName", "-"),
-                    rebase.get("EnzType", "-"),
-                    rebase.get("RecSeq", "-"),
-                    sequence
-                ])
-            )
+        for contig, hits_in_contig in hits.items():
+            for hit in hits_in_contig:
+                rebase = rebase_data.get(hit["qaccver"])
+                coverage = 100 * float(hit["length"]) / float(hit["qlen"])
+                sequence = extract_subsequence(genome, hit["saccver"], int(hit["sstart"]), int(hit["send"]))
+                out.write(
+                    "\t".join([
+                        rebase.get("REBASE", "-"),
+                        rebase.get("UniProt", "-"),
+                        hit["saccver"] + ":" + hit["sstart"] + "-" + hit["send"],
+                        hit["pident"],
+                        str(round(coverage, 2)),
+                        rebase.get("OrgName", "-"),
+                        rebase.get("EnzType", "-"),
+                        rebase.get("RecSeq", "-"),
+                        sequence
+                    ])+"\n"
+                )
 
 if __name__ == "__main__":
     main()

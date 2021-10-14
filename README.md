@@ -17,10 +17,10 @@ bash getref.sh
 
 By default only the gold standard sequences of REFBASE is used:
 ```
-./findRE.py genome.fasta > output.tsv
+./findRE.py genome.fasta output.tsv
 ```
 
 If you want to use the full database (takes a long time!), use:
 ```
-./findRE.py genome.fasta all > output.tsv
+./findRE.py genome.fasta output.tsv all
 ```
